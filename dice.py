@@ -1,29 +1,37 @@
 from random import randint
 import inquirer
+import os
 
 bet = int(0)
 roll = int(0)
-username = ''
-balance = int(99)
-yes = ('Y', 'y', 'yes', 'YES', 'Yes', '')
-no = ('N', 'n', 'no', 'NO', 'No', ' ')
-#predict = int(0)
+users = {}
 print('DICE - \n')
-
+username = ''
+balance = 0
 
 def login():
+    global username
+    global balance
     username = input('Username - ')
-    balance = input('Starting balance - ')
+    username = (username.upper())
+    if username in users:
+        print('Welcome back ' + username + '\n' + 'Remaining balance is ' + str(users[username]))
+        balance = (users[username])
+    if username not in users:
+        balance = 100
+        print('Hi ' + (username.title()) + '\nYou start with 100 credit')
+        users[username] = balance
+    print(users[username])
 
 
 def start():
-    global balance
     global predict
     hilo = ''
     d1 = 0
     d2 = 0
     betok = False
     predict = 0
+    mult = 0
     playagain =''
     questions = [
             inquirer.List('predict',
@@ -49,10 +57,10 @@ def start():
 
     while betok == False:
         bet = int(input('\nWhat is your bet? - '))
-        if bet <= balance:
+        if bet <= (users[username]):
             betok = True
         else:
-            print('Your balance is too low. Max bet at the moment is ' + str(balance) + '.')
+            print('Your balance is too low. Max bet at the moment is ' + str(users[username]) + '.')
     d1 = randint(1,6)
     d2 = randint(1,6)
     tot = int(d1 + d2)
@@ -76,30 +84,30 @@ def start():
             payout = (bet * (1 + mult))
             print('You win - multiplier is ' + str(mult) + 'x.')
             print('Payout is ' + str(payout) + '.')
-            balance = balance + payout
+            (users[username]) += payout
         else:
-            print('You lose')
-            print('Old balance - ' + str(balance))
-            balance = balance - int(bet)
-            if balance < 1:
+            print('You lose ')
+            print('Old balance - ' + str(users[username]))
+            (users[username])  = (users[username]) - int(bet)
+            if (users[username]) < 1:
                 print('You are out of cash!     -     GAME OVER!!')
                 exit()
 
     else:
         if (tot > predict and greater_than == True) or (tot < predict and greater_than == False):
-            print('You win')
-            print('Old balance - ' + str(balance))
-            balance = balance + int(bet)
-        elif (tot < predict and greater_than == True) or (tot > predict and greater_than == False):
+            print('You win ')
+            print('Old balance - ' + str(users[username]))
+            (users[username]) += int(bet)
+        elif (tot < predict and greater_than == True) or (tot > predict and greater_than == False) or (tot == predict):
             print('You lose')
-            print('Old balance - ' + str(balance))
-            balance = balance - int(bet)
+            print('Old balance - ' + str(users[username]))
+            (users[username]) -= int(bet)
             if balance < 1:
                 print('You are out of cash!     -     GAME OVER!!')
                 exit()                
 
     print('Bet was ' + str(bet))
-    print('New balance = ' + str(balance) + '\n')
+    print('New balance = ' + str(users[username]) + '\n')
 
     questions = [
                 inquirer.List('playagain',
@@ -110,13 +118,15 @@ def start():
     answers = inquirer.prompt(questions)
     if answers['playagain'] == 'Yes':
         for i in range(1, 5):        
-            print('\n')
+            os.system('clear')
+            print('\n       Balance - ' + str(users[username]) + '\n')
         start()
     else:
         print('Goodbye, progress saved.')
         exit()
 
 
+login()
 start()
 
 
