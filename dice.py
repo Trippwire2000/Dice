@@ -1,13 +1,16 @@
 from random import randint
 import inquirer
+import pickle
 import os
 
 bet = int(0)
 roll = int(0)
-users = {}
+users = pickle.load(open("users.p", "rb"))
+#users = {}
 print('DICE - \n')
 username = ''
 balance = 0
+
 
 def login():
     global username
@@ -15,13 +18,13 @@ def login():
     username = input('Username - ')
     username = (username.upper())
     if username in users:
+        os.system('clear')
         print('Welcome back ' + username + '\n' + 'Remaining balance is ' + str(users[username]))
         balance = (users[username])
     if username not in users:
         balance = 100
         print('Hi ' + (username.title()) + '\nYou start with 100 credit')
         users[username] = balance
-    print(users[username])
 
 
 def start():
@@ -36,31 +39,44 @@ def start():
     questions = [
             inquirer.List('predict',
                                 message = 'Pick a number between 3 and 11 - ',
-                                choices=[3, 4, 5, 6, 7, 8, 9, 10, 11]
+                                choices=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
                         ),
         ]
     answers = inquirer.prompt(questions)
     predict = answers['predict']
     print('You have chosen ' + str(answers['predict']) + '.\n')
 
-    questions = [inquirer.List('hiloq', message = 'Will the roll of the dice be Higher, Lower or Precise?', choices=['Higher', 'Precise', 'Lower']),]
-                              
-    answers = inquirer.prompt(questions)
-    if answers['hiloq'] == 'Higher':
-        greater_than = True
-        precise = False
-    elif answers['hiloq'] == 'Lower':
-        greater_than = False
-        precise = False
-    else:
+#set the variable to indicate high or low roll
+    if (answers['predict']) == 2:
+        print('Not possible to roll lower than 2, so your bet is set to precise.')
+        precise = True
+    elif (answers['predict']) == 12:
+        print('Not possible to roll over 12, so your bet is set to precise.')
         precise = True
 
-    while betok == False:
-        bet = int(input('\nWhat is your bet? - '))
-        if bet <= (users[username]):
-            betok = True
+    else:
+        questions = [inquirer.List('hiloq', message = 'Will the roll of the dice be Higher, Lower or Precise?', choices=['Higher', 'Precise', 'Lower']),]
+                              
+        answers = inquirer.prompt(questions)
+        if answers['hiloq'] == 'Higher':
+            greater_than = True
+            precise = False
+        elif answers['hiloq'] == 'Lower':
+            greater_than = False
+            precise = False
         else:
-            print('Your balance is too low. Max bet at the moment is ' + str(users[username]) + '.')
+            precise = True
+
+    while betok == False:
+        try:
+            bet = int(input('\nWhat is your bet? - '))
+            if bet <= (users[username]):
+                betok = True        
+            else:
+                print('Your balance is too low. Max bet at the moment is ' + str(users[username]) + '.')
+        except:
+            print('\nEnter a number with no decimal\n')
+
     d1 = randint(1,6)
     d2 = randint(1,6)
     tot = int(d1 + d2)
@@ -93,12 +109,29 @@ def start():
                 print('You are out of cash!     -     GAME OVER!!')
                 exit()
 
-    else:
-        if (tot > predict and greater_than == True) or (tot < predict and greater_than == False):
+
+#multipliers for higher rolls
+    elif greater_than == True:
+        for i in range (2, 11):
+            if predict == i:
+                mult = i - 1
+                payout = (bet * mult)
+
+#multipliers for lower rolls
+    elif greater_than == False:
+        for i in range(3,12):
+            if predict == i:
+                mult = 13 - i        
+                payout = (bet * mult)
+
+
+        if ((tot > predict) and (greater_than == True)) or ((tot < predict) and (greater_than == False)):
             print('You win ')
             print('Old balance - ' + str(users[username]))
-            (users[username]) += int(bet)
-        elif (tot < predict and greater_than == True) or (tot > predict and greater_than == False) or (tot == predict):
+            print('Multiplier is ' + str(mult) + 'x.\n')
+            (users[username]) += payout
+
+        elif ((tot < predict) and (greater_than == True)) or ((tot > predict) and (greater_than == False)) or (tot == predict) and (precise == False:)
             print('You lose')
             print('Old balance - ' + str(users[username]))
             (users[username]) -= int(bet)
@@ -122,6 +155,7 @@ def start():
             print('\n       Balance - ' + str(users[username]) + '\n')
         start()
     else:
+        pickle.dump(users, open("users.p", "wb"))
         print('Goodbye, progress saved.')
         exit()
 
